@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 public class UtilisateurJDBCDAO implements UtilisateurDAO {
     private final DbConnectionManager dbManager = DbConnectionManager.getInstance();
@@ -69,5 +70,25 @@ public class UtilisateurJDBCDAO implements UtilisateurDAO {
         }
     }
 
+    @Override
+    public List<Utilisateur> findAll(int id) throws SQLException {
+        String query = "Select * from Utilisateur where id != ?";
 
+        List<Utilisateur> utilisateurs = new java.util.ArrayList<>();
+        try(Connection conn = dbManager.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(query)){
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()){
+                Utilisateur u = new Utilisateur();
+                u.setId(rs.getInt("id"));
+                u.setPseudo(rs.getString("pseudo"));
+                u.setNom(rs.getString("nom"));
+                u.setPrenom(rs.getString("prenom"));
+                u.setMdp(rs.getString("mdp"));
+                utilisateurs.add(u);
+            }
+        }
+        return utilisateurs;
+    }
 }

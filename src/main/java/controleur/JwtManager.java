@@ -13,7 +13,7 @@ public class JwtManager {
     // pour SHA256 : 256 bits mini
     private static final String SECRET_KEY = "bachibouzoukbachibouzoukbachibouzoukbachibouzouk";
 
-    public static String createJWT() {
+    public static String createJWT(int id, String pseudo) {
         byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
         SecretKey signingKey = Keys.hmacShaKeyFor(keyBytes);
         Instant now = Instant.now();
@@ -23,8 +23,10 @@ public class JwtManager {
         String token = Jwts.builder()
                 .id(UUID.randomUUID().toString().replace("-", ""))
                 .issuedAt(Date.from(now))
-                .subject("Authentification pour TP 3 Web services")
-                .issuer("maxime.morge@univ-lyon1.fr")
+                .subject("Authentification pour Fakord")
+                .issuer("salim.chabchoub@etu.univ-lyon1.fr")
+                .claim("id",id)
+                .claim("pseudo",pseudo)
                 .expiration(expDate)
                 .signWith(signingKey)
                 .compact();
@@ -42,25 +44,5 @@ public class JwtManager {
         return claims;
     }
 
-    // Exemple de fonctionnement
-    public static void main(String args[]) {
-        System.out.println(JwtManager.SECRET_KEY);
-        String token = JwtManager.createJWT();
-        /*
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        */
-        System.out.println(token);
-        Claims claims = null;
-        try {
-            claims = JwtManager.decodeJWT(token);
-        } catch (Exception e) {
-            System.out.println("jeton invalide " + e.getMessage());
-            System.exit(1);
-        }
-        System.out.println(claims.toString());
-    }
+
 }
