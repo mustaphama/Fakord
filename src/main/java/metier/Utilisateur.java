@@ -21,7 +21,7 @@ public class Utilisateur {
     private String prenom;
 
     @Column(nullable = false, length = 255)
-    private String mdp; // Mot de passe haché
+    private String mdp;
 
     public Utilisateur() {}
 

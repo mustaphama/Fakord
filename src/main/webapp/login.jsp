@@ -1,3 +1,4 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -8,10 +9,10 @@
 <h2>Connexion</h2>
 <form method="post" action="login">
     <label for="pseudo">Pseudo :</label>
-    <input type="text" name="pseudo" id="pseudo" required><br>
+    <input type="text" name="pseudo" placeholder="Pseudo" required><br>
 
     <label for="mdp">Mot de passe :</label>
-    <input type="password" name="mdp" id="mdp" required><br>
+    <input type="password" name="mdp" placeholder="Mot de passe" required><br>
 
     <button type="submit">Se connecter</button>
 </form>
