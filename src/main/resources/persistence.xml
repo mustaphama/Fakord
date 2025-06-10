@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             version="3.1">
+
+    <persistence-unit name="PU_JPA">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>metier.Utilisateur</class>
+        <class>metier.Message</class>
+        <class>metier.Canal</class>
+        <class>metier.EspaceTravail</class>
+
+        <properties>
+            <property name="jakarta.persistence.jdbc.driver"
+                      value="org.postgresql.Driver"/>
+            <property name="jakarta.persistence.jdbc.url"
+                      value="jdbc:postgresql://localhost:5432/webdb"/>
+            <property name="jakarta.persistence.jdbc.user"
+                      value="groupe7"/>
+            <property name="jakarta.persistence.jdbc.password"
+                      value="projet"/>
+            <property name="jakarta.persistence.schema-generation.database.action"
+                      value="none"/>
+            <property name="hibernate.show_sql"
+                      value="true"/>
+            <property name="hibernate.format_sql"
+                      value="true"/>
+            <property name="hibernate.dialect"
+                      value="org.hibernate.dialect.PostgreSQLDialect"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>

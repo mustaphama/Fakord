@@ -23,7 +23,6 @@ public class Utilisateur {
     @Column(nullable = false, length = 255)
     private String mdp; // Mot de passe haché
 
-    // 🔁 Constructeurs
     public Utilisateur() {}
 
     public Utilisateur(String pseudo, String nom, String prenom, String mdp) {
@@ -33,7 +32,6 @@ public class Utilisateur {
         this.mdp = mdp;
     }
 
-    // ⚙️ Getters & Setters
     public Integer getId() {
         return id;
     }
