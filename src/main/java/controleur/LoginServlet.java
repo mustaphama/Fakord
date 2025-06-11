@@ -1,57 +1,52 @@
 package controleur;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dao.UtilisateurDAO;
 import dao.UtilisateurJDBCDAO;
+import dao.UtilisateurJPADAO;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import metier.Utilisateur;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
-@WebServlet("/login")
+@WebServlet("/api/login")
 public class LoginServlet extends HttpServlet {
 
-    private final UtilisateurDAO utilisateurDAO = new UtilisateurJDBCDAO();
+    private final UtilisateurDAO utilisateurDAO = new UtilisateurJPADAO();
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String action = req.getParameter("action");
-        if ("logout".equals(action)) {
-            Cookie cookie = new Cookie("token", "");
-            cookie.setMaxAge(0);
-            cookie.setPath("/");
-            resp.addCookie(cookie);
-            resp.sendRedirect("login.jsp");
-        } else {
-            // Rediriger vers le formulaire de login
-            resp.sendRedirect("login.jsp");
-        }
-    }
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pseudo = req.getParameter("pseudo");
-        String mdp = req.getParameter("mdp");
-
+        resp.setContentType("application/json;charset=UTF-8");
+        BufferedReader reader = req.getReader();
+        Utilisateur loginInput = mapper.readValue(reader, Utilisateur.class);
+        if (loginInput.getPseudo() == null || loginInput.getMdp() == null) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Champs manquants");
+            return;
+        }
         try {
-            Utilisateur user = utilisateurDAO.checkLogin(pseudo, mdp);
-            if (user != null) {
-                String token = JwtManager.createJWT(user.getId(), user.getPseudo());
-                Cookie cookie = new Cookie("token", token);
-                cookie.setHttpOnly(true);
-                cookie.setPath("/");
-                resp.addCookie(cookie);
+            Utilisateur utilisateur = utilisateurDAO.checkLogin(loginInput.getPseudo(), loginInput.getMdp());
 
-                resp.sendRedirect("protected/accueil");
+            if (utilisateur != null) {
+                String token = JwtManager.createJWT(utilisateur.getId(), utilisateur.getPseudo());
+                Map<String, Object> json = new HashMap<>();
+                json.put("message", "Connexion réussie");
+                json.put("token", token);
+                mapper.writeValue(resp.getWriter(), json);
             } else {
-                resp.sendRedirect("login.jsp?error=1");
+                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Identifiants incorrects");
             }
         } catch (Exception e) {
-            resp.sendRedirect("login.jsp?error=2");
+            e.printStackTrace(); // Pour le débogage
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur serveur");
         }
     }
 }
-
 
