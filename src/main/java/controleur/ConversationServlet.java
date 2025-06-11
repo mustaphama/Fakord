@@ -1,20 +1,23 @@
 package controleur;
 
-import dao.MessageJDBCDAO;
+import dao.MessageJPADAO;
 import io.jsonwebtoken.Claims;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import metier.Message;
+import org.example.fakord.ApplicationListener;
 
 import java.io.IOException;
 import java.util.List;
 
 @WebServlet("/protected/conversation")
 public class ConversationServlet extends HttpServlet {
-    private final MessageJDBCDAO dao = new MessageJDBCDAO();
+    private final EntityManager em = ApplicationListener.getEmf().createEntityManager();
+    private final MessageJPADAO dao = new MessageJPADAO(em);
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

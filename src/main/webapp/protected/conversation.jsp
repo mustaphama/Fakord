@@ -9,6 +9,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="metier.Message" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="metier.Ecrit" %>
 <%
     List<Message> messages = (List<Message>) request.getAttribute("messages");
     int destinataireId = (Integer) request.getAttribute("destinataireId");
@@ -22,7 +23,11 @@
 
 <div>
     <% for (Message m : messages) {
-        String auteur = m.getUtilisateurEmetteurId() == currentUserId ? "moi" : destinatairePseudo; // pseudo envoyé par la servlet
+        // Get the first Ecrit relationship (assuming one sender per message)
+        Ecrit ecrit = m.getEcrits().iterator().next();
+        String auteur = ecrit.getUtilisateurEmetteur().getId() == currentUserId
+                ? "moi"
+                : ecrit.getUtilisateurEmetteur().getPseudo();
     %>
     <p><%= m.getTemps().format(formatter) %> - <%= auteur %> : <%= m.getContenu() %></p>
     <% } %>

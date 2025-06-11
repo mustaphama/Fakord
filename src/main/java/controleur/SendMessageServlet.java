@@ -1,17 +1,20 @@
 package controleur;
 
-import dao.MessageJDBCDAO;
+import dao.*;
 import io.jsonwebtoken.Claims;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.fakord.ApplicationListener;
 
 import java.io.IOException;
 
 @WebServlet("/protected/sendMessage")
 public class SendMessageServlet extends HttpServlet {
-    private final MessageJDBCDAO dao = new MessageJDBCDAO();
+    private final EntityManager em = ApplicationListener.getEmf().createEntityManager();
+    private final MessageJPADAO dao = new MessageJPADAO(em);
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {

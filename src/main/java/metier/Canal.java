@@ -1,31 +1,38 @@
 package metier;
 
 import jakarta.persistence.*;
+
 import java.io.Serializable;
+import java.util.Set;
 
 @Entity
 @Table(name = "Canal")
 public class Canal implements Serializable {
 
     @Id
-    @Column(name = "nom", length = 100)
+    @Column(length = 100)
     private String nom;
 
     @Column(name = "statue", length = 50)
-    private String statue;
+    private String statut;
 
     @ManyToOne
-    @JoinColumn(name = "nomEspace", referencedColumnName = "nom", nullable = false)
+    @JoinColumn(name = "nomEspace", nullable = false)
     private EspaceTravail espaceTravail;
+
+    @OneToMany(mappedBy = "canal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Publie> publications;
+
+    @OneToMany(mappedBy = "nomCanal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<InviteCanal> invitations;
 
     public Canal() {}
 
+    // Getters et setters
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
-
-    public String getStatue() { return statue; }
-    public void setStatue(String statue) { this.statue = statue; }
-
+    public String getStatut() { return statut; }
+    public void setStatut(String statut) { this.statut = statut; }
     public EspaceTravail getEspaceTravail() { return espaceTravail; }
     public void setEspaceTravail(EspaceTravail espaceTravail) { this.espaceTravail = espaceTravail; }
 }

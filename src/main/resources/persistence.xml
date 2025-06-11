@@ -8,12 +8,19 @@
         <class>metier.Message</class>
         <class>metier.Canal</class>
         <class>metier.EspaceTravail</class>
+        <class>metier.Administre</class>
+        <class>metier.Appartient</class>
+        <class>metier.InviteCanal</class>
+        <class>metier.InviteEspace</class>
+        <class>metier.Reagit</class>
+        <class>metier.Publie</class>
+        <class>metier.Ecrit</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver"
                       value="org.postgresql.Driver"/>
             <property name="jakarta.persistence.jdbc.url"
-                      value="jdbc:postgresql://localhost:5432/webdb"/>
+                      value="jdbc:postgresql://localhost:5432/Fakord"/>
             <property name="jakarta.persistence.jdbc.user"
                       value="groupe7"/>
             <property name="jakarta.persistence.jdbc.password"

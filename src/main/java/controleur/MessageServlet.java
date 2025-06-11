@@ -1,19 +1,22 @@
 package controleur;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dao.MessageJDBCDAO;
+import dao.*;
 import io.jsonwebtoken.Claims;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import metier.Message;
+import org.example.fakord.ApplicationListener;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
 public class MessageServlet extends HttpServlet {
-    private final MessageJDBCDAO messageJDBCDAO = new MessageJDBCDAO();
+    private final EntityManager em = ApplicationListener.getEmf().createEntityManager();
+    private final MessageJPADAO messageJDBCDAO = new MessageJPADAO(em);
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -52,14 +55,9 @@ public class MessageServlet extends HttpServlet {
         }
 
         int idOtherUser = Integer.parseInt(idOther);
-        try {
-            List<Message> messages = messageJDBCDAO.getMessagesPrivee(userId,idOtherUser);
-            resp.setContentType("application/json");
-            new ObjectMapper().writeValue(resp.getWriter(), messages);
-        } catch (SQLException e) {
-            resp.setStatus(500);
-            resp.getWriter().write("Erreur : " + e.getMessage());
-        }
+        List<Message> messages = messageJDBCDAO.getMessagesPrivee(userId,idOtherUser);
+        resp.setContentType("application/json");
+        new ObjectMapper().writeValue(resp.getWriter(), messages);
 
     }
 }
