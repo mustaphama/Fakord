@@ -2,6 +2,7 @@ package dao;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import metier.Utilisateur;
 
@@ -30,12 +31,12 @@ public class UtilisateurJPADAO implements UtilisateurDAO {
     public Utilisateur checkLogin(String pseudo, String motDePasse) {
         EntityManager em = getEmf().createEntityManager();
         try {
-            TypedQuery<Utilisateur> query = em.createQuery(
-                    "SELECT u FROM Utilisateur u WHERE u.pseudo = :pseudo AND u.mdp = encode(digest(:mdp, 'sha256'), 'hex')",
+            Query query = em.createNativeQuery(
+                    "SELECT * FROM utilisateur WHERE pseudo = :pseudo AND mdp = encode(digest(:mdp, 'sha256'), 'hex')",
                     Utilisateur.class);
             query.setParameter("pseudo", pseudo);
             query.setParameter("mdp", motDePasse);
-            return query.getSingleResult();
+            return (Utilisateur) query.getSingleResult();
         } catch (NoResultException e) {
             return null;
         } finally {

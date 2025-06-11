@@ -13,7 +13,7 @@
     <label>Mot de passe : <input type="password" name="mdp" required></label><br><br>
     <button type="submit">Se connecter</button>
 </form>
-<p id="error" style="color:red;">pseudo ou mot de passe incorrecte</p>
+<p id="error" style="color:red; display:none;"></p>
 <p>Pas encore inscrit ? <a href="register.jsp">Créer un compte</a></p>
 <script>
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
@@ -22,6 +22,7 @@
         const mdp = e.target.mdp.value;
         if(!pseudo) {
             document.getElementById("error").textContent = "Pseudo invalide";
+            document.getElementById("error").style.display = "block";
             return;
         }
         const data = {
@@ -29,21 +30,21 @@
             mdp: mdp
         };
 
-        const response = await fetch("/Fakord/api/login", {
+        const response = await fetch("./api/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(data)
         });
-
         if (response.ok) {
             const resData = await response.json();
             localStorage.setItem("token", resData.token);
-            window.location.href = "accueil.html";
+            window.location.href = "protected/accueil";
         } else {
             const errMsg = await response.text();
             document.getElementById("error").textContent = errMsg;
+            document.getElementById("error").style.display = "block";
         }
     });
     function sanitizeInput(input) {
