@@ -38,7 +38,7 @@ public class ConversationServlet extends HttpServlet {
             req.setAttribute("destinataireId", otherId);
             req.setAttribute("destinatairePseudo", otherPseudo);
             req.setAttribute("currentUserId", currentUserId);
-            req.getRequestDispatcher("conversation.jsp").forward(req, resp);
+            req.getRequestDispatcher("conversation.html").forward(req, resp);
         } catch (Exception e) {
             resp.sendError(500, "Erreur : " + e.getMessage());
         }

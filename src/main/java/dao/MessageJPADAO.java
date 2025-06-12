@@ -66,4 +66,75 @@ public class MessageJPADAO implements MessageDAO {
 
         return query.getResultList();
     }
+
+    public boolean supprimerMessage(int idMessage, int idUser) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            Message message = em.find(Message.class, idMessage);
+
+            if (message == null || message.getEcrits().stream().noneMatch(e -> e.getUtilisateurEmetteur().getId() == idUser)) {
+                tx.rollback();
+                return false;
+            }
+
+            em.remove(message);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw new RuntimeException("Erreur suppression message", e);
+        }
+    }
+
+    public boolean modifierMessage(int idMessage, int idUser, String nouveauContenu) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            Message message = em.find(Message.class, idMessage);
+
+            if (message == null || message.getEcrits().stream().noneMatch(e -> e.getUtilisateurEmetteur().getId() == idUser)) {
+                tx.rollback();
+                return false;
+            }
+
+            message.setContenu(nouveauContenu);
+            em.merge(message);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw new RuntimeException("Erreur modification message", e);
+        }
+    }
+
+    public boolean modifierContenuMessage(int messageId, int userId, String nouveauContenu) {
+        EntityTransaction tx = em.getTransaction();
+
+        try {
+            tx.begin();
+
+            Message message = em.find(Message.class, messageId);
+            if (message == null) {
+                tx.rollback();
+                return false;
+            }
+
+            boolean estAuteur = message.getEcrits().stream()
+                    .anyMatch(e -> e.getUtilisateurEmetteur().getId() == userId);
+
+            if (!estAuteur) {
+                tx.rollback();
+                return false;
+            }
+
+            message.setContenu(nouveauContenu);
+            em.merge(message);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw new RuntimeException("Erreur lors de la modification du message", e);
+        }
+    }
 }

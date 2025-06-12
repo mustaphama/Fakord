@@ -2,7 +2,6 @@ package controleur;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dao.UtilisateurDAO;
-import dao.UtilisateurJDBCDAO;
 import dao.UtilisateurJPADAO;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -13,7 +12,6 @@ import metier.Utilisateur;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 

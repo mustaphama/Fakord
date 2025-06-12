@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Conversation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            color: #3b5998;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #3b5998;
+            text-decoration: none;
+        }
+
+        #conversation {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+            position: relative;
+            word-wrap: break-word;
+            transition: background-color 0.3s;
+        }
+
+        .message.moi {
+            background-color: #dcf8c6;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.autre {
+            background-color: #ececec;
+            margin-right: auto;
+            text-align: left;
+        }
+
+        .heure {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .actions {
+            display: none;
+            position: absolute;
+            top: 5px;
+            right: 10px;
+        }
+
+        .message:hover .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        button.btn-edit, button.btn-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #555;
+            transition: color 0.2s;
+        }
+
+        button.btn-edit:hover {
+            color: #2c7be5;
+        }
+
+        button.btn-delete:hover {
+            color: #e53935;
+        }
+
+        form#formMessage {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        form#formMessage input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            outline: none;
+            font-size: 1em;
+        }
+
+        form#formMessage button {
+            padding: 10px 20px;
+            background-color: #3b5998;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        form#formMessage button:hover {
+            background-color: #2d4373;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<h2>Conversation</h2>
+<a href="accueil">⬅ Retour</a>
+
+
+<div id="conversation"></div>
+
+<form id="formMessage">
+    <input type="text" id="contenu" placeholder="Votre message" required>
+    <button type="submit">Envoyer</button>
+</form>
+
+<script>
+    // Récupération du token et configuration
+    const token = localStorage.getItem("token");
+    const destinataireId = new URLSearchParams(window.location.search).get("id");
+    const currentUserId = getUserIdFromToken(token);
+    if (!token || !destinataireId || !currentUserId) {
+        window.location.href = "login.jsp";
+        throw new Error("Redirection vers la page de login");
+    }
+
+    const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+    };
+
+    chargerMessages();
+
+    setInterval(chargerMessages, 5000);
+
+    async function chargerMessages() {
+        try {
+            const res = await fetch(`/Fakord_war_exploded/protected/message?to=${destinataireId}`, {
+                method: "GET",
+                headers: headers
+            });
+
+            console.log("Statut de la réponse:", res.status);
+
+            if (!res.ok) {
+                if (res.status === 401) {
+                    window.location.href = "login.jsp";
+                    return;
+                }
+                throw new Error(`Erreur ${res.status}: ${res.statusText}`);
+            }
+
+            const rawText = await res.text();
+
+            const messages = JSON.parse(rawText);
+            afficherMessages(messages);
+        } catch (error) {
+            console.error("Erreur lors du chargement des messages:", error);
+            document.getElementById("conversation").innerHTML =
+                `<div class="error">Erreur lors du chargement des messages: ${error.message}</div>`;
+        }
+    }
+
+    function afficherMessages(messages) {
+        const div = document.getElementById("conversation");
+        div.innerHTML = messages.map(m => {
+            const date = new Date(m.temps);
+            const heure = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const auteurId = m.utilisateurEmetteur?.id;
+            const estMoi = auteurId === currentUserId;
+            const auteur = estMoi ? "moi" : (m.utilisateurEmetteur?.pseudo || "inconnu");
+
+            return `
+            <div class="message ${estMoi ? 'moi' : 'autre'}" data-id="${m.id}">
+                <div class="heure">${heure}</div>
+                <div><strong>${auteur}:</strong> ${m.contenu}</div>
+                ${estMoi ? `
+                    <div class="actions">
+                        <button class="btn-edit">✏️</button>
+                        <button class="btn-delete">🗑️</button>
+                    </div>` : ''}
+            </div>
+        `;
+        }).join("");
+
+        div.scrollTop = div.scrollHeight;
+
+        document.querySelectorAll(".btn-delete").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const id = e.target.closest(".message").dataset.id;
+                await supprimerMessage(id);
+            });
+        });
+
+        document.querySelectorAll(".btn-edit").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const id = e.target.closest(".message").dataset.id;
+                const nouveauContenu = prompt("Modifier le message :");
+                if (nouveauContenu) {
+                    await modifierMessage(id, nouveauContenu);
+                }
+            });
+        });
+    }
+
+
+
+    async function envoyerMessage() {
+        const contenu = document.getElementById("contenu").value.trim();
+        if (!contenu) return;
+
+        try {
+            const res = await fetch(`/Fakord_war_exploded/protected/message`, {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify({
+                    to: parseInt(destinataireId),
+                    contenu: contenu
+                })
+            });
+
+            if (res.ok) {
+                document.getElementById("contenu").value = "";
+                chargerMessages();
+            } else {
+                if (res.status === 401) {
+                    window.location.href = "../login.jsp";
+                    return;
+                }
+                throw new Error(`Erreur ${res.status}: ${res.statusText}`);
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'envoi du message:", error);
+            alert("Erreur lors de l'envoi du message: " + error.message);
+        }
+    }
+
+    function getUserIdFromToken(token) {
+        try {
+            const payloadBase64 = token.split('.')[1];
+            const payloadJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+            const payload = JSON.parse(payloadJson);
+            return payload.id || null; // Adaptez selon la structure de votre token
+        } catch (e) {
+            console.error("Erreur de décodage du token:", e);
+            return null;
+        }
+    }
+
+    async function supprimerMessage(id) {
+        const res = await fetch(`/Fakord_war_exploded/protected/message?id=${id}`, {
+            method: "DELETE",
+            headers: headers
+        });
+        if (res.ok) {
+            chargerMessages();
+        } else {
+            alert("Erreur lors de la suppression");
+        }
+    }
+
+    async function modifierMessage(id, contenu) {
+        const res = await fetch(`/Fakord_war_exploded/protected/message`, {
+            method: "PUT",
+            headers: headers,
+            body: JSON.stringify({ id: parseInt(id), contenu: contenu })
+        });
+        if (res.ok) {
+            chargerMessages();
+        } else {
+            alert("Erreur lors de la modification");
+        }
+    }
+
+
+
+
+    document.getElementById("formMessage").addEventListener("submit", e => {
+        e.preventDefault();
+        envoyerMessage();
+    });
+</script>
+</body>
+</html>

@@ -17,7 +17,7 @@ public class JwtManager {
         byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
         SecretKey signingKey = Keys.hmacShaKeyFor(keyBytes);
         Instant now = Instant.now();
-        Instant expiration = now.plusSeconds(240); // 4 mn
+        Instant expiration = now.plusSeconds(560); // 4 mn
         Date expDate = Date.from(expiration);
         // Let's set the JWT Claims
         String token = Jwts.builder()

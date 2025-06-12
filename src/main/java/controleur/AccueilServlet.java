@@ -1,7 +1,6 @@
 package controleur;
 
 import dao.UtilisateurDAO;
-import dao.UtilisateurJDBCDAO;
 import dao.UtilisateurJPADAO;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.ServletException;
