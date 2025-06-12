@@ -37,16 +37,19 @@
             mdp: form.mdp.value
         };
 
-        const res = await fetch("/Fakord/api/register", {
+        const response = await fetch("./api/register", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(data)
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data),
+            credentials: "include"
         });
 
         const result = await res.json();
         if (res.ok) {
             alert(result.message);
-            window.location.href = "login.html";
+            window.location.href = "login.jsp";
         } else {
             document.getElementById("result").textContent = result.error;
         }

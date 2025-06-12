@@ -1,6 +1,8 @@
 package controleur;
 
+import dao.UtilisateurDAO;
 import dao.UtilisateurJDBCDAO;
+import dao.UtilisateurJPADAO;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,20 +17,26 @@ import java.util.List;
 
 @WebServlet("/protected/accueil")
 public class AccueilServlet extends HttpServlet {
-    private final UtilisateurJDBCDAO utilisateurJDBCDAO = new UtilisateurJDBCDAO();
+
+    private UtilisateurDAO utilisateurDAO = new UtilisateurJPADAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Claims claims = (Claims) req.getAttribute("claims");
-        int currentUserId = claims.get("id", Integer.class);
-
-        try {
-            List<Utilisateur> utilisateurs = utilisateurJDBCDAO.findAll(currentUserId);
-            req.setAttribute("utilisateurs", utilisateurs);
-            req.getRequestDispatcher("/protected/accueil.jsp").forward(req, resp);
-        } catch (SQLException e) {
-            resp.sendError(500, "Erreur serveur : " + e.getMessage());
+        if (claims == null) {
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
         }
+        // Par ex. récupérer tous les utilisateurs sauf celui connecté
+        Integer idConnecte = claims.get("id", Integer.class);
+        List<Utilisateur> utilisateurs = null;
+        try {
+            utilisateurs = utilisateurDAO.findAll(idConnecte);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        req.setAttribute("utilisateurs", utilisateurs);
+        req.getRequestDispatcher("/protected/accueil.jsp").forward(req, resp);
     }
 }
 

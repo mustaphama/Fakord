@@ -5,6 +5,7 @@ import dao.UtilisateurDAO;
 import dao.UtilisateurJDBCDAO;
 import dao.UtilisateurJPADAO;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,6 +37,11 @@ public class LoginServlet extends HttpServlet {
 
             if (utilisateur != null) {
                 String token = JwtManager.createJWT(utilisateur.getId(), utilisateur.getPseudo());
+                Cookie cookie = new Cookie("token", token);
+                cookie.setPath("/");  // rendre le cookie accessible sur tout le site
+// cookie.setHttpOnly(true); // à envisager pour sécuriser, mais ça bloque JS
+                resp.addCookie(cookie);
+
                 Map<String, Object> json = new HashMap<>();
                 json.put("message", "Connexion réussie");
                 json.put("token", token);

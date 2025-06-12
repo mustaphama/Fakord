@@ -6,7 +6,7 @@
     <title>Connexion</title>
 </head>
 <body>
-<h2>Connexion</h2>
+<h2>Connexions</h2>
 
 <form id="loginForm">
     <label>Pseudo : <input type="text" name="pseudo" required></label><br><br>
@@ -35,7 +35,8 @@
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            credentials: "include"
         });
         if (response.ok) {
             const resData = await response.json();

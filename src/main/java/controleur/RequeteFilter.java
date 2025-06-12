@@ -28,13 +28,16 @@ public class RequeteFilter implements Filter {
         }
 
         if (token == null) {
-            response.sendRedirect("/login.jsp");
+            response.sendRedirect("Fakord_war_exploded/login.jsp");
             return;
         }
 
+        System.out.println(token);
+
         try {
             Claims claims = JwtManager.decodeJWT(token);
-            request.setAttribute("claims", claims); // accessible dans la servlet
+            request.setAttribute("claims", claims);
+            System.out.println(claims.get("pseudo"));// accessible dans la servlet
             chain.doFilter(req, res); // continuer
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

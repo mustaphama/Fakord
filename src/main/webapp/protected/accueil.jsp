@@ -10,6 +10,9 @@
 <%@ page import="metier.Utilisateur" %>
 <%
     List<Utilisateur> utilisateurs = (List<Utilisateur>) request.getAttribute("utilisateurs");
+    if (utilisateurs == null) {
+        utilisateurs = new java.util.ArrayList<>();
+    }
 %>
 <html>
 <head>
@@ -23,7 +26,7 @@
     <li><a href="conversation?id=<%= u.getId() %>&pseudo=<%= u.getPseudo() %>"><%= u.getPseudo() %></a></li>
     <% } %>
 </ul>
-<form action="../login" method="get">
+<form action="../login.jsp" method="get">
     <input type="hidden" name="action" value="logout">
     <button type="submit">Se déconnecter</button>
 </form>
