@@ -1,9 +1,11 @@
 package metier;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -26,8 +28,9 @@ public class Message implements Serializable {
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Publie> publications;
 
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Reagit> reactions;
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"message"})
+    private Set<Reagit> reactions = new HashSet<>();
 
     public Message() {}
 
@@ -43,5 +46,8 @@ public class Message implements Serializable {
     public void setTemps(LocalDateTime temps) { this.temps = temps; }
     public Set<Ecrit> getEcrits() {
         return ecrits;
+    }
+    public Set<Reagit> getReactions() {
+        return reactions;
     }
 }

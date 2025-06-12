@@ -53,18 +53,23 @@ public class MessageJPADAO implements MessageDAO {
 
     @Override
     public List<Message> getMessagesPrivee(int idSender, int idReceiver) {
-        String jpql = """
-            SELECT m FROM Message m
-            JOIN Ecrit e ON m = e.message
+        String jpql =  """
+            SELECT DISTINCT m FROM Message m
+            LEFT JOIN FETCH m.reactions
+            JOIN FETCH m.ecrits e
+            JOIN FETCH e.utilisateurEmetteur
             WHERE (e.utilisateurEmetteur.id = :idSender AND e.utilisateurRecepteur.id = :idReceiver)
                OR (e.utilisateurEmetteur.id = :idReceiver AND e.utilisateurRecepteur.id = :idSender)
             ORDER BY m.temps
-            """;
+        """;
         TypedQuery<Message> query = em.createQuery(jpql, Message.class);
         query.setParameter("idSender", idSender);
         query.setParameter("idReceiver", idReceiver);
-
-        return query.getResultList();
+        List<Message> messages = query.getResultList();
+        for (Message m : messages) {
+            m.getReactions().size();
+        }
+        return messages;
     }
 
     public boolean supprimerMessage(int idMessage, int idUser) {

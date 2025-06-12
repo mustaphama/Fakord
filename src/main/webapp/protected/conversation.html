@@ -128,6 +128,39 @@
             text-align: center;
             font-weight: bold;
         }
+        .reaction-popup {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        .reaction-popup .emoji {
+            cursor: pointer;
+            font-size: 1.2em;
+            margin: 2px;
+        }
+
+        .actions {
+            position: relative;
+        }
+        .reactions {
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        .reaction-count {
+            margin-right: 8px;
+            background: #eee;
+            border-radius: 12px;
+            padding: 2px 8px;
+            display: inline-block;
+        }
+
+
     </style>
 </head>
 <body>
@@ -151,6 +184,15 @@
         window.location.href = "login.jsp";
         throw new Error("Redirection vers la page de login");
     }
+    const EMOJIS = {
+        "like": "👍",
+        "love": "❤️",
+        "haha": "😄",
+        "wow": "😲",
+        "sad": "😢",
+        "angry": "😠",
+    };
+
 
     const headers = {
         "Content-Type": "application/json",
@@ -159,7 +201,6 @@
 
     chargerMessages();
 
-    setInterval(chargerMessages, 5000);
 
     async function chargerMessages() {
         try {
@@ -197,19 +238,74 @@
             const auteurId = m.utilisateurEmetteur?.id;
             const estMoi = auteurId === currentUserId;
             const auteur = estMoi ? "moi" : (m.utilisateurEmetteur?.pseudo || "inconnu");
-
+            const groupedReactions = {};
+            (m.reactions || []).forEach(r => {
+                const reactionName = r.reaction;
+                groupedReactions[reactionName] = (groupedReactions[reactionName] || 0) + 1;
+            });
+            const reactionsHtml = Object.entries(groupedReactions)
+                .map(([reactionName, count]) =>
+                    `<span class="reaction-count" data-reaction="${reactionName}">
+                    ${getEmoji(reactionName)} x${count}
+                </span>`
+                ).join(" ");
             return `
-            <div class="message ${estMoi ? 'moi' : 'autre'}" data-id="${m.id}">
-                <div class="heure">${heure}</div>
-                <div><strong>${auteur}:</strong> ${m.contenu}</div>
-                ${estMoi ? `
-                    <div class="actions">
-                        <button class="btn-edit">✏️</button>
-                        <button class="btn-delete">🗑️</button>
-                    </div>` : ''}
-            </div>
-        `;
+              <div class="message ${estMoi ? 'moi' : 'autre'}" data-id="${m.id}">
+                  <div class="heure">${heure}</div>
+                  <div><strong>${auteur}:</strong> ${m.contenu}</div>
+                  <div class="reactions">${reactionsHtml}</div>
+                  <div class="actions">
+                      ${estMoi ? `
+                          <button class="btn-edit">✏️</button>
+                          <button class="btn-delete">🗑️</button>` : ''}
+                      <button class="btn-react">😊</button>
+                      <div class="reaction-popup" style="display: none;">
+                      ${Object.entries({
+                            "like": "👍",
+                            "love": "❤️",
+                            "haha": "😂",
+                            "wow": "😮",
+                            "sad": "😢",
+                            "angry": "😠"
+                        }).map(([name, emoji]) =>
+                            `<span class="emoji" data-reaction="${name}">${emoji}</span>`
+                        ).join(" ")}
+                  </div>
+                  </div>
+              </div>
+            `;
+
         }).join("");
+        document.querySelectorAll(".reaction-popup .emoji").forEach(span => {
+            span.addEventListener("click", async (e) => {
+                const messageDiv = e.target.closest(".message");
+                const messageId = messageDiv.dataset.id;
+                const reaction = e.target.dataset.reaction;
+
+                const message = messages.find(m => m.id == messageId);
+                const existing = (message.reactions || []).find(r => r.utilisateur?.id === currentUserId);
+                const method = existing ? "PUT" : "POST";
+                const url = "/Fakord_war_exploded/protected/reaction";
+
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        messageId: parseInt(messageId),
+                        reaction: reaction
+                    })
+                });
+
+                if (res.ok) {
+                    chargerMessages();
+                } else {
+                    alert("Erreur lors de l'envoi de la réaction");
+                }
+            });
+        });
 
         div.scrollTop = div.scrollHeight;
 
@@ -227,6 +323,13 @@
                 if (nouveauContenu) {
                     await modifierMessage(id, nouveauContenu);
                 }
+            });
+        });
+
+        document.querySelectorAll(".btn-react").forEach(btn => {
+            btn.addEventListener("click", e => {
+                const popup = btn.nextElementSibling;
+                popup.style.display = popup.style.display === "block" ? "none" : "block";
             });
         });
     }
@@ -299,8 +402,9 @@
             alert("Erreur lors de la modification");
         }
     }
-
-
+    function getEmoji(reactionName) {
+        return EMOJIS[reactionName] || reactionName;
+    }
 
 
     document.getElementById("formMessage").addEventListener("submit", e => {

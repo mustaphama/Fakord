@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import metier.Ecrit;
 import metier.Message;
+import metier.Reagit;
 import org.example.fakord.ApplicationListener;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -57,6 +58,17 @@ public class MessageServlet extends HttpServlet {
             auteurData.put("pseudo", ecrit.getUtilisateurEmetteur().getPseudo());
 
             messageData.put("utilisateurEmetteur", auteurData);
+            List<Map<String, Object>> reactionsData = new ArrayList<>();
+            for (Reagit reaction : m.getReactions()) {
+                Map<String, Object> reactionData = new HashMap<>();
+                reactionData.put("reaction", reaction.getReaction());
+                reactionData.put("utilisateur", Map.of(
+                        "id", reaction.getUtilisateur().getId(),
+                        "pseudo", reaction.getUtilisateur().getPseudo()
+                ));
+                reactionsData.add(reactionData);
+            }
+            messageData.put("reactions", reactionsData);
             jsonMessages.add(messageData);
         }
         resp.setContentType("application/json;charset=UTF-8");
