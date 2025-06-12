@@ -22,7 +22,7 @@
     <label>Mot de passe : <input type="password" name="mdp" required></label><br>
     <button type="submit">S'inscrire</button>
 </form>
-
+<p>Vous avez déjà un compte ? <a href="register.jsp">Connectez-vous</a></p>
 <p id="result" style="color: red;"></p>
 
 <script>
@@ -37,7 +37,7 @@
             mdp: form.mdp.value
         };
 
-        const response = await fetch("./api/register", {
+        const res = await fetch("./api/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

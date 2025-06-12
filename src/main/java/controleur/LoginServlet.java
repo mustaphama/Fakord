@@ -38,8 +38,7 @@ public class LoginServlet extends HttpServlet {
             if (utilisateur != null) {
                 String token = JwtManager.createJWT(utilisateur.getId(), utilisateur.getPseudo());
                 Cookie cookie = new Cookie("token", token);
-                cookie.setPath("/");  // rendre le cookie accessible sur tout le site
-// cookie.setHttpOnly(true); // à envisager pour sécuriser, mais ça bloque JS
+                cookie.setPath("/");
                 resp.addCookie(cookie);
 
                 Map<String, Object> json = new HashMap<>();
@@ -47,7 +46,7 @@ public class LoginServlet extends HttpServlet {
                 json.put("token", token);
                 mapper.writeValue(resp.getWriter(), json);
             } else {
-                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Identifiants incorrects");
+                resp.sendRedirect(req.getContextPath() + "/login.jsp?error=1");
             }
         } catch (Exception e) {
             e.printStackTrace(); // Pour le débogage
