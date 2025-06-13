@@ -19,10 +19,26 @@ public class Administre implements Serializable{
     @JoinColumn(name = "nomEspace", nullable = false)
     private EspaceTravail nomEspace;
 
+
     public static class AdministreId implements Serializable {
         private Integer utilisateur;
         private String nomEspace;
         // Getters/Setters, equals(), hashCode()
+    }
+    public Utilisateur getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
+    }
+
+    public EspaceTravail getNomEspace() {
+        return nomEspace;
+    }
+
+    public void setNomEspace(EspaceTravail nomEspace) {
+        this.nomEspace = nomEspace;
     }
 
 

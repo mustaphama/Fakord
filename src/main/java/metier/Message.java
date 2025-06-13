@@ -23,13 +23,13 @@ public class Message implements Serializable {
     private LocalDateTime temps;
 
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Ecrit> ecrits;
+    private Set<Ecrit> ecrits=new HashSet<>();
 
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Publie> publications;
+    private Set<Publie> publications=new HashSet<>();
 
+    @JsonIgnoreProperties({"messages", "message"})
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"message"})
     private Set<Reagit> reactions = new HashSet<>();
 
     public Message() {}
@@ -50,4 +50,5 @@ public class Message implements Serializable {
     public Set<Reagit> getReactions() {
         return reactions;
     }
+    public Set<Publie> getPublications() {return publications; }
 }

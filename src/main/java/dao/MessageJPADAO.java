@@ -1,8 +1,6 @@
 package dao;
 
-import metier.Message;
-import metier.Utilisateur;
-import metier.Ecrit;
+import metier.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
@@ -73,23 +71,7 @@ public class MessageJPADAO implements MessageDAO {
     }
 
     public boolean supprimerMessage(int idMessage, int idUser) {
-        EntityTransaction tx = em.getTransaction();
-        try {
-            tx.begin();
-            Message message = em.find(Message.class, idMessage);
-
-            if (message == null || message.getEcrits().stream().noneMatch(e -> e.getUtilisateurEmetteur().getId() == idUser)) {
-                tx.rollback();
-                return false;
-            }
-
-            em.remove(message);
-            tx.commit();
-            return true;
-        } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
-            throw new RuntimeException("Erreur suppression message", e);
-        }
+        return false;
     }
 
     public boolean modifierMessage(int idMessage, int idUser, String nouveauContenu) {
@@ -142,4 +124,52 @@ public class MessageJPADAO implements MessageDAO {
             throw new RuntimeException("Erreur lors de la modification du message", e);
         }
     }
+        @Override
+        public List<Message> getMessagesByCanal(String nomCanal) {
+            String jpql = """
+            SELECT m FROM Message m
+            WHERE m.id IN (
+                SELECT p.message.id FROM Publie p WHERE p.canal.nom = :nomCanal
+            )
+            ORDER BY m.temps ASC
+        """;
+            TypedQuery<Message> query = em.createQuery(jpql, Message.class);
+            query.setParameter("nomCanal", nomCanal);
+            return query.getResultList();
+        }
+
+    public void createMessageInCanal(Message message, Integer idUtilisateur, String nomCanal) throws Exception {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+
+            // Persiste le message
+            em.persist(message);
+            em.flush(); // pour avoir l'ID généré
+
+            // Récupère l'utilisateur et le canal depuis la base
+            Utilisateur utilisateur = em.find(Utilisateur.class, idUtilisateur);
+            if (utilisateur == null) throw new Exception("Utilisateur introuvable");
+
+            Canal canal = em.find(Canal.class, nomCanal);
+            if (canal == null) throw new Exception("Canal introuvable");
+
+            // Crée l'objet Publie et set les relations
+            Publie publication = new Publie();
+            publication.setMessage(message);
+            publication.setUtilisateur(utilisateur);
+            publication.setCanal(canal);
+
+            // Persiste la publication
+            em.persist(publication);
+
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
+    }
+
+
+
 }

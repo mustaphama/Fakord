@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un espace de travail</title>
+</head>
+<body>
+<a href="accueil">⬅ Retour</a>
+<form id="createForm">
+    <input type="text" name="nom" id="nom-espace" placeholder="Nom de l'espace" required>
+    <input type="text" name="description" id="description-espace" placeholder="Description" required>
+    <button type="submit">Créer</button>
+</form>
+<div id="create-message"></div>
+</body>
+</html>
+<script>
+    document.getElementById("createForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const nom = document.getElementById("nom-espace").value;
+        const description = document.getElementById("description-espace").value;
+
+        fetch("espaceTravail/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ nom, description })
+        })
+    .then(res => res.json())
+            .then(data => {
+                const msg = document.getElementById("create-message");
+                if (data.success) {
+                    msg.textContent = "Espace créé avec succès !";
+
+                } else {
+                    msg.textContent = "Erreur : " + data.message;
+                }
+            });
+    });
+</script>

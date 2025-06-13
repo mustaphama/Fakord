@@ -74,7 +74,6 @@ public class MessageServlet extends HttpServlet {
         resp.setContentType("application/json;charset=UTF-8");
         mapper.writeValue(resp.getWriter(), jsonMessages);
         em.close();
-
     }
 
     @Override

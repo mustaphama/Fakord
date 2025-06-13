@@ -111,6 +111,65 @@
         }
     %>
 </div>
+
+<h1>Espaces de travail</h1>
+<p><a href="createEspace.html">➕ Créer espace</a></p>
+<ul id="espace-list">Loading...</ul>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const list = document.getElementById("espace-list");
+        fetch("espaceTravail/")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    afficherEspaces(data.espaces);
+                } else {
+                    document.getElementById("espace-list").textContent = "Erreur : " + data.message;
+                }
+    })});
+    function afficherEspaces(espaces) {
+        const container = document.getElementById("espace-list");
+        container.innerHTML = "";
+
+        espaces.forEach(espace => {
+            const div = document.createElement("div");
+
+            const lien = document.createElement("a");
+            lien.href = `espaceTravail.html?nom=\${encodeURIComponent(espace.nom)}`;
+            lien.textContent = espace.nom + " - " + espace.description;
+            lien.style.marginRight = "1em";
+
+            div.appendChild(lien);
+
+            if (espace.isAdmin) {
+                const btn = document.createElement("button");
+                btn.textContent = "🗑️ Supprimer";
+                btn.className = "btn-message";
+                btn.onclick = () => deleteEspace(espace.nom);
+                div.appendChild(btn);
+            }
+
+            container.appendChild(div);
+        });
+    }
+    function deleteEspace(nom) {
+        if (!confirm(`Voulez-vous vraiment supprimer l'espace "\${nom}" ?`)) return;
+
+        fetch(`espaceTravail?nom=\${encodeURIComponent(nom)}`, {
+            method: 'DELETE'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Espace supprimé !");
+                    location.reload();
+                } else {
+                    alert("Erreur : " + data.message);
+                }
+            })
+            .catch(error => console.error('Erreur lors de la suppression :', error));
+    }
+</script>
 <div class="logout">
     <a href="../login.jsp">Se déconnecter</a>
 </div>

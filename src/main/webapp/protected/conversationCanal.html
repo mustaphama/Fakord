@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Conversation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            color: #3b5998;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #3b5998;
+            text-decoration: none;
+        }
+
+        #conversation {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+            position: relative;
+            word-wrap: break-word;
+            transition: background-color 0.3s;
+        }
+
+        .message.moi {
+            background-color: #dcf8c6;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.autre {
+            background-color: #ececec;
+            margin-right: auto;
+            text-align: left;
+        }
+
+        .heure {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .actions {
+            display: none;
+            position: absolute;
+            top: 5px;
+            right: 10px;
+        }
+
+        .message:hover .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        button.btn-edit, button.btn-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #555;
+            transition: color 0.2s;
+        }
+
+        button.btn-edit:hover {
+            color: #2c7be5;
+        }
+
+        button.btn-delete:hover {
+            color: #e53935;
+        }
+
+        form#formMessage {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        form#formMessage input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            outline: none;
+            font-size: 1em;
+        }
+
+        form#formMessage button {
+            padding: 10px 20px;
+            background-color: #3b5998;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        form#formMessage button:hover {
+            background-color: #2d4373;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<h2>Conversation</h2>
+<a href="accueil">⬅ Retour</a>
+
+
+<div id="conversation"></div>
+
+<form id="formMessage">
+    <input type="text" id="contenu" placeholder="Votre message" required>
+    <button type="submit">Envoyer</button>
+</form>
+
+<script>
+    const headers = {
+        "Content-Type": "application/json"
+    };
+    let currentUserId; // Define globally
+
+    // Decode the token to get the user ID (if using JWT)
+    function initUserId() {
+        const token = localStorage.getItem('token'); // Or from cookies
+        if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            currentUserId = payload.id;
+            console.log("Id = " + currentUserId)
+        }
+    }
+
+    // Call this on page load
+    initUserId();
+    chargerMessages();
+
+    setInterval(chargerMessages, 5000);
+
+    async function chargerMessages() {
+        try {
+            const canalNom = new URLSearchParams(window.location.search).get("canal");
+            if (!canalNom) {
+                throw new Error("Nom du canal manquant dans l'URL");
+            }
+
+            // Ici on met le nom du canal dans le path de l'URL
+            const res = await fetch(`messageCanal/${encodeURIComponent(canalNom)}`, {
+                method: "GET",
+                headers: headers
+            });
+
+            console.log("Statut de la réponse:", res.status);
+
+            if (!res.ok) {
+                if (res.status === 401) {
+                    window.location.href = "login.jsp";
+                    return;
+                }
+                throw new Error(`Erreur ${res.status}: ${res.statusText}`);
+            }
+
+            const rawText = await res.text();
+            console.log("Texte brut reçu :", rawText);
+            const data = JSON.parse(rawText);
+
+
+            afficherMessages(data.messages);
+        } catch (error) {
+            console.error("Erreur lors du chargement des messages:", error);
+            document.getElementById("conversation").innerHTML =
+                `<div class="error">Erreur lors du chargement des messages: ${error.message}</div>`;
+        }
+    }
+
+
+    function afficherMessages(messages) {
+        const div = document.getElementById("conversation");
+        div.innerHTML = ""; // Reset
+
+        for (const m of messages) {
+            const date = new Date(m.temps);
+            const heure = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const auteurId = m.utilisateur.id;
+            const estMoi = auteurId === currentUserId;
+            const auteur = estMoi ? "moi" : m.utilisateur.pseudo;
+
+            const groupedReactions = {};
+            (m.reactions || []).forEach(r => {
+                const reactionName = r.reaction;
+                groupedReactions[reactionName] = (groupedReactions[reactionName] || 0) + 1;
+            });
+
+            let reactionsHtml = "";
+            for (const [reactionName, count] of Object.entries(groupedReactions)) {
+                reactionsHtml += `
+                <span class="reaction-count" data-reaction="${reactionName}">
+                    ${getEmoji(reactionName)} x${count}
+                </span>`;
+            }
+
+            let emojisHtml = "";
+            for (const [name, emoji] of Object.entries({
+                "like": "👍",
+                "love": "❤️",
+                "haha": "😂",
+                "wow": "😮",
+                "sad": "😢",
+                "angry": "😠"
+            })) {
+                emojisHtml += `<span class="emoji" data-reaction="${name}">${emoji}</span> `;
+            }
+
+            div.innerHTML += `
+            <div class="message ${estMoi ? 'moi' : 'autre'}" data-id="${m.id}">
+                <div class="heure">${heure}</div>
+                <div><strong>${auteur}:</strong> ${m.contenu}</div>
+                <div class="reactions">${reactionsHtml}</div>
+                <div class="actions">
+                    ${estMoi ? `
+                        <button class="btn-edit">✏️</button>
+                        <button class="btn-delete">🗑️</button>` : ''}
+                    <button class="btn-react">😊</button>
+                    <div class="reaction-popup" style="display: none;">${emojisHtml}</div>
+                </div>
+            </div>`;
+        }
+
+        // Réactions
+        document.querySelectorAll(".reaction-popup .emoji").forEach(span => {
+            span.addEventListener("click", async (e) => {
+                const messageDiv = e.target.closest(".message");
+                const messageId = messageDiv.dataset.id;
+                const reaction = e.target.dataset.reaction;
+
+                const message = messages.find(m => m.id == messageId);
+                const existing = (message.reactions || []).find(r => r.utilisateur?.id === currentUserId);
+                const method = existing ? "PUT" : "POST";
+
+                const res = await fetch("/Fakord_war_exploded/protected/reaction", {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        messageId: parseInt(messageId),
+                        reaction: reaction
+                    })
+                });
+
+                if (res.ok) {
+                    chargerMessages();
+                } else {
+                    alert("Erreur lors de l'envoi de la réaction");
+                }
+            });
+        });
+
+        // Suppression
+        document.querySelectorAll(".btn-delete").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const id = e.target.closest(".message").dataset.id;
+                await supprimerMessage(id);
+            });
+        });
+
+        // Édition
+        document.querySelectorAll(".btn-edit").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const id = e.target.closest(".message").dataset.id;
+                const nouveauContenu = prompt("Modifier le message :");
+                if (nouveauContenu) {
+                    await modifierMessage(id, nouveauContenu);
+                }
+            });
+        });
+
+        // Réactions (popup toggle)
+        document.querySelectorAll(".btn-react").forEach(btn => {
+            btn.addEventListener("click", e => {
+                const popup = btn.nextElementSibling;
+                popup.style.display = popup.style.display === "block" ? "none" : "block";
+            });
+        });
+
+        div.scrollTop = div.scrollHeight;
+    }
+
+
+
+    async function envoyerMessage() {
+        const contenu = document.getElementById("contenu").value.trim();
+        if (!contenu) return;
+
+        const canalNom = new URLSearchParams(window.location.search).get("canal");
+        if (!canalNom) {
+            alert("Nom du canal manquant !");
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token'); // Or from cookies
+            const res = await fetch(`messageCanal/${encodeURIComponent(canalNom)}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Add token
+                },
+                body: JSON.stringify({ contenu: contenu })
+            });
+
+            if (!res.ok) {
+                // Handle 401 by redirecting to login
+                if (res.status === 401) {
+                    window.location.href = "accueil.jsp";
+                    return;
+                }
+                // For other errors, try to parse the error message or use statusText
+                const errorText = await res.text();
+                throw new Error(errorText || `Erreur ${res.status}`);
+            }
+
+            document.getElementById("contenu").value = "";
+            chargerMessages(); // Refresh messages
+        } catch (error) {
+            console.error("Erreur lors de l'envoi du message:", error);
+            alert("Erreur lors de l'envoi du message: " + error.message);
+        }
+    }
+
+    async function supprimerMessage(id) {
+        const res = await fetch(`message?id=${id}`, {
+            method: "DELETE",
+            headers: headers
+        });
+        if (res.ok) {
+            chargerMessages();
+        } else {
+            alert("Erreur lors de la suppression");
+        }
+    }
+
+    async function modifierMessage(id, contenu) {
+        const res = await fetch(`/Fakord_war_exploded/protected/message`, {
+            method: "PUT",
+            headers: headers,
+            body: JSON.stringify({ id: parseInt(id), contenu: contenu })
+        });
+        if (res.ok) {
+            chargerMessages();
+        } else {
+            alert("Erreur lors de la modification");
+        }
+    }
+    document.getElementById("formMessage").addEventListener("submit", e => {
+        e.preventDefault();
+        envoyerMessage();
+    });
+</script>
+</body>
+</html>
