@@ -71,21 +71,22 @@ public class EspaceTravailServlet extends HttpServlet {
         String pathInfo = req.getPathInfo();
         resp.setContentType("application/json;charset=UTF-8");
         System.out.println("ouaiii");
+        Claims claims = (Claims) req.getAttribute("claims");
+        if (claims == null) {
+            System.out.println("claims null");
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
+        }
+        System.out.println("jsp");
+        System.out.println(claims.get("id"));
+        // Par ex. récupérer tous les utilisateurs sauf celui connecté
+        Integer idConnecte = claims.get("id", Integer.class);
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
                 //HttpSession session = req.getSession();
                 //Utilisateur currentUser = (Utilisateur) session.getAttribute("user");
                 System.out.println("jessaie");
-                Claims claims = (Claims) req.getAttribute("claims");
-                if (claims == null) {
-                    System.out.println("claims null");
-                    resp.sendRedirect(req.getContextPath() + "/login.jsp");
-                    return;
-                }
-                System.out.println("jsp");
-                System.out.println(claims.get("id"));
-                // Par ex. récupérer tous les utilisateurs sauf celui connecté
-                Integer idConnecte = claims.get("id", Integer.class);
+
                 Utilisateur currentUser = new Utilisateur();
                 currentUser.setId(idConnecte);
                 if (currentUser == null) {
@@ -112,8 +113,10 @@ public class EspaceTravailServlet extends HttpServlet {
                         "success", true,
                         "espaces", espacesJson
                 ));
-            } else {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            } else if (pathInfo.equals("/admin")) {
+                // Renvoie seulement les espaces où l'utilisateur est admin
+                List<EspaceTravail> espaces = espaceDAO.findAdminEspaces(idConnecte);
+                mapper.writeValue(resp.getWriter(), Map.of("success", true, "espaces", espaces));
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

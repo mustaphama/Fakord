@@ -22,7 +22,7 @@
     <label>Mot de passe : <input type="password" name="mdp" required></label><br>
     <button type="submit">S'inscrire</button>
 </form>
-<p>Vous avez déjà un compte ? <a href="register.jsp">Connectez-vous</a></p>
+<p>Vous avez déjà un compte ? <a href="login.jsp">Connectez-vous</a></p>
 <p id="result" style="color: red;"></p>
 
 <script>

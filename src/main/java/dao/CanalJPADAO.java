@@ -1,6 +1,7 @@
 package dao;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import metier.Canal;
@@ -32,8 +33,25 @@ import java.util.List;
 
         @Override
         public boolean deleteByNom(String nom) {
-            return false;
+            EntityTransaction tx = em.getTransaction();
+            try {
+                tx.begin();
+                Canal canal = em.find(Canal.class, nom);
+                if (canal != null) {
+                    em.remove(canal);
+                    tx.commit();
+                    return true;
+                } else {
+                    tx.rollback();
+                    return false; // pas trouvé
+                }
+            } catch (Exception e) {
+                if (tx.isActive()) tx.rollback();
+                e.printStackTrace();
+                return false;
+            }
         }
+
 
         public Canal findByName(String nomCanal) {
             try {

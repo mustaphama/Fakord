@@ -1,12 +1,10 @@
 package dao;
 
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.TypedQuery;
+import jakarta.persistence.*;
 import metier.*;
 import metier.EspaceTravail;
-import jakarta.persistence.EntityManager;
 
+import java.util.Collections;
 import java.util.List;
 
 public class EspaceTravailJPADAO implements EspaceTravailDAO {
@@ -118,6 +116,44 @@ public class EspaceTravailJPADAO implements EspaceTravailDAO {
             e.printStackTrace();
         }
         return false;
+    }
+    // Trouve les espaces où l'utilisateur est admin
+    @Override
+    public List<EspaceTravail> findAdminEspaces(Integer userId) {
+        try {
+            String jpql = "SELECT e FROM EspaceTravail e " +
+                    "JOIN Administre a ON e.nom = a.nomEspace.nom " +
+                    "WHERE a.utilisateur.id = :userId";
+
+            TypedQuery<EspaceTravail> query = em.createQuery(jpql, EspaceTravail.class);
+            query.setParameter("userId", userId);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public EspaceTravail findById(int idEspace) {
+        return em.find(EspaceTravail.class, idEspace);
+    }
+
+    // Vérifie si un utilisateur est admin d'un espace spécifique
+    public boolean isUserAdmin(String nomEspace, Integer userId) {
+        try {
+            String jpql = "SELECT COUNT(a) > 0 FROM Administre a " +
+                    "WHERE a.nomEspace.nom = :nomEspace " +
+                    "AND a.utilisateur.id = :userId";
+
+            Query query = em.createQuery(jpql);
+            query.setParameter("nomEspace", nomEspace);
+            query.setParameter("userId", userId);
+            return (Boolean) query.getSingleResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 

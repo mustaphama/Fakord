@@ -14,4 +14,9 @@ public interface EspaceTravailDAO {
     boolean isAdmin(int userId, String nomEspace);
 
     boolean deleteByNom(String nom);
+
+    // Trouve les espaces où l'utilisateur est admin
+    List<EspaceTravail> findAdminEspaces(Integer userId);
+
+    EspaceTravail findById(int idEspace);
 }

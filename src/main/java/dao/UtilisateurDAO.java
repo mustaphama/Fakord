@@ -16,4 +16,6 @@ public interface UtilisateurDAO {
     List<Utilisateur> findAll(int id) throws SQLException;
 
 
+    Utilisateur findById(int idUtilisateur);
+
 }

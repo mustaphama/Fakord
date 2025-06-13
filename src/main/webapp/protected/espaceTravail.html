@@ -20,6 +20,7 @@
 </div>
 
 <script>
+
     const espaceNom = new URLSearchParams(window.location.search).get("nom");
     let isAdmin = false;
 
@@ -38,10 +39,33 @@
                 lien.textContent = `${canal.nom} (${canal.statut})`;
                 li.appendChild(lien);
                 list.appendChild(li);
+                if (isAdmin) {
+                    const btn = document.createElement("button");
+                    btn.textContent = "🗑️ Supprimer";
+                    btn.className = "btn-message";
+                    btn.onclick = () => deleteCanal(canal.nom);
+                    li.appendChild(btn);
+                }
             });
         }
     }
+    function deleteCanal(nom) {
+        if (!confirm(`Voulez-vous vraiment supprimer le canal "${nom}" ?`)) return;
 
+        fetch(`canal?nom=${encodeURIComponent(nom)}`, {
+            method: 'DELETE'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Canal supprimé !");
+                    location.reload();
+                } else {
+                    alert("Erreur : " + data.message);
+                }
+            })
+            .catch(error => console.error('Erreur lors de la suppression :', error));
+    }
     async function checkAdmin() {
         const res = await fetch(`espaceTravail/`);
         const data = await res.json();

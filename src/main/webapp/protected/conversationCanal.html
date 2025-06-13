@@ -157,8 +157,7 @@
             console.log("Id = " + currentUserId)
         }
     }
-
-    // Call this on page load
+    const token = localStorage.getItem('token');
     initUserId();
     chargerMessages();
 
@@ -199,7 +198,23 @@
                 `<div class="error">Erreur lors du chargement des messages: ${error.message}</div>`;
         }
     }
+    function deleteCanal(nom) {
+        if (!confirm(`Voulez-vous vraiment supprimer le canal "${nom}" ?`)) return;
 
+        fetch(`canal?nom=\${encodeURIComponent(nom)}`, {
+            method: 'DELETE'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Canal supprimé !");
+                    location.reload();
+                } else {
+                    alert("Erreur : " + data.message);
+                }
+            })
+            .catch(error => console.error('Erreur lors de la suppression :', error));
+    }
 
     function afficherMessages(messages) {
         const div = document.getElementById("conversation");

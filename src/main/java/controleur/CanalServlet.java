@@ -31,7 +31,6 @@ public class CanalServlet extends HttpServlet {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Paramètre 'espace' manquant");
             return;
         }
-
         List<Canal> canals = canalDAO.findPublicByEspace(nomEspace);
         resp.setContentType("application/json");
         mapper.writeValue(resp.getWriter(), Map.of("success", true, "canaux", canals));
@@ -84,7 +83,6 @@ public class CanalServlet extends HttpServlet {
         canalDAO.create(canal); // méthode JPADAO pour insert
         mapper.writeValue(resp.getWriter(), Map.of("success", true, "message", "Canal créé"));
     }
-
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String nom = req.getParameter("nom");

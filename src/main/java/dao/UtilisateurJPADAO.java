@@ -78,4 +78,20 @@ public class UtilisateurJPADAO implements UtilisateurDAO {
             em.close();
         }
     }
+
+
+    @Override
+    public Utilisateur findById(int idUtilisateur) {
+        EntityManager em = getEmf().createEntityManager();
+        try {
+            TypedQuery<Utilisateur> query = em.createQuery(
+                    "SELECT u FROM Utilisateur u WHERE u.id = :id", Utilisateur.class);
+            query.setParameter("id", idUtilisateur);
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        } finally {
+            em.close();
+        }
+    }
 }

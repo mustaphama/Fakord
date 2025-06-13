@@ -94,7 +94,6 @@
 <div class="welcome">
     <p>Choisissez un contact pour commencer à discuter :</p>
 </div>
-
 <div class="contact-list">
     <%
         List<metier.Utilisateur> utilisateurs = (List<metier.Utilisateur>) request.getAttribute("utilisateurs");
@@ -111,7 +110,6 @@
         }
     %>
 </div>
-
 <h1>Espaces de travail</h1>
 <p><a href="createEspace.html">➕ Créer espace</a></p>
 <ul id="espace-list">Loading...</ul>
@@ -170,6 +168,135 @@
             .catch(error => console.error('Erreur lors de la suppression :', error));
     }
 </script>
+<h1>Invitations en attente</h1>
+<ul id="invitations-list">Loading...</ul>
+
+<!-- Section Admin (seulement visible si admin) -->
+<div id="admin-section" style="display: none;">
+    <h2>Inviter un utilisateur</h2>
+    <form id="invite-form">
+        <select id="espace-select" required>
+            <option value="">Choisir un espace</option>
+        </select>
+        <input type="email" id="email-invite" placeholder="Email de l'invité" required>
+        <button type="submit">Envoyer l'invitation</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Vérifier si l'utilisateur est admin
+        fetch("../protected/userInfo")
+            .then(res => res.json())
+            .then(user => {
+                if (user.isAdmin) {
+                    document.getElementById("admin-section").style.display = "block";
+                    loadAdminEspaces();
+                }
+            });
+
+        loadEspaces();
+        loadInvitations();
+    });
+
+    function loadEspaces() {
+        fetch("espaceTravail/")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    afficherEspaces(data.espaces);
+                } else {
+                    document.getElementById("espace-list").textContent = "Erreur : " + data.message;
+                }
+            });
+    }
+
+    function loadAdminEspaces() {
+        fetch("espaceTravail/admin")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const select = document.getElementById("espace-select");
+                    data.espaces.forEach(espace => {
+                        const option = document.createElement("option");
+                        option.value = espace.nom;
+                        option.textContent = espace.nom;
+                        select.appendChild(option);
+                    });
+                }
+            });
+    }
+
+
+    function afficherEspaces(espaces) {
+        const container = document.getElementById("espace-list");
+        container.innerHTML = "";
+
+        espaces.forEach(espace => {
+            const div = document.createElement("div");
+            div.className = "espace-item";
+
+            const lien = document.createElement("a");
+            lien.href = `espaceTravail.html?nom=\${encodeURIComponent(espace.nom)}`;
+            lien.textContent = `\${espace.nom} - \${espace.description}`;
+            lien.style.marginRight = "10px";
+
+            div.appendChild(lien);
+
+            if (espace.isAdmin) {
+                const btnSuppr = document.createElement("button");
+                btnSuppr.textContent = "Supprimer";
+                btnSuppr.className = "btn-message";
+                btnSuppr.onclick = () => deleteEspace(espace.nom);
+                div.appendChild(btnSuppr);
+            }
+
+            container.appendChild(div);
+        });
+    }
+
+    function deleteEspace(nom) {
+        if (!confirm(`Voulez-vous vraiment supprimer l'espace "\${nom}" ?`)) return;
+
+        fetch(`espaceTravail?nom=\${encodeURIComponent(nom)}`, {
+            method: 'DELETE'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Espace supprimé !");
+                    loadEspaces();
+                    if (document.getElementById("admin-section").style.display === "block") {
+                        loadAdminEspaces();
+                    }
+                } else {
+                    alert("Erreur : " + data.message);
+                }
+            });
+    }
+
+    document.getElementById("invite-form").addEventListener("submit", e => {
+        e.preventDefault();
+        const espace = document.getElementById("espace-select").value;
+        const email = document.getElementById("email-invite").value;
+
+        fetch("invitationEspace/", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ espace, email })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Invitation envoyée avec succès !");
+                    document.getElementById("email-invite").value = "";
+                } else {
+                    alert("Erreur : " + data.message);
+                }
+            });
+    });
+</script>
+
 <div class="logout">
     <a href="../login.jsp">Se déconnecter</a>
 </div>
