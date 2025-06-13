@@ -18,11 +18,16 @@
             margin: 0;
             padding: 20px;
             color: #333;
+            line-height: 1.6;
+        }
+
+        h1, h2 {
+            color: #3b5998;
+            margin-bottom: 20px;
         }
 
         h1 {
             text-align: center;
-            color: #3b5998;
             margin-bottom: 30px;
         }
 
@@ -31,9 +36,9 @@
             margin-bottom: 30px;
         }
 
-        .contact-list {
-            max-width: 600px;
-            margin: 0 auto;
+        .contact-list, .espace-container, .invitations-container {
+            max-width: 800px;
+            margin: 0 auto 30px;
             background-color: #fff;
             border-radius: 10px;
             padding: 20px;
@@ -57,8 +62,8 @@
             color: #333;
         }
 
-        .btn-message {
-            padding: 6px 12px;
+        .btn-message, button {
+            padding: 8px 16px;
             background-color: #3b5998;
             color: white;
             border: none;
@@ -66,9 +71,10 @@
             cursor: pointer;
             transition: background-color 0.3s;
             text-decoration: none;
+            font-size: 0.9em;
         }
 
-        .btn-message:hover {
+        .btn-message:hover, button:hover {
             background-color: #2d4373;
         }
 
@@ -85,6 +91,81 @@
 
         .logout a:hover {
             text-decoration: underline;
+        }
+
+        #espace-list, #invitations-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .espace-item, .invitation-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .espace-item:last-child, .invitation-item:last-child {
+            border-bottom: none;
+        }
+
+        .espace-item a, .invitation-item a {
+            color: #3b5998;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+
+        .espace-item a:hover, .invitation-item a:hover {
+            text-decoration: underline;
+        }
+
+        #admin-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+
+        #invite-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #invite-form select, #invite-form input[type="email"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        #invite-form button {
+            padding: 8px 16px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-danger {
+            background-color: #e53935;
+        }
+
+        .btn-danger:hover {
+            background-color: #c62828;
+        }
+
+        .btn-accept {
+            background-color: #43a047;
+        }
+
+        .btn-accept:hover {
+            background-color: #2e7d32;
         }
     </style>
 </head>
@@ -110,66 +191,17 @@
         }
     %>
 </div>
-<h1>Espaces de travail</h1>
-<p><a href="createEspace.html">➕ Créer espace</a></p>
-<ul id="espace-list">Loading...</ul>
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const list = document.getElementById("espace-list");
-        fetch("espaceTravail/")
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    afficherEspaces(data.espaces);
-                } else {
-                    document.getElementById("espace-list").textContent = "Erreur : " + data.message;
-                }
-    })});
-    function afficherEspaces(espaces) {
-        const container = document.getElementById("espace-list");
-        container.innerHTML = "";
 
-        espaces.forEach(espace => {
-            const div = document.createElement("div");
+<div class="espace-container">
+    <h1>Espaces de travail</h1>
+    <p><a href="createEspace.html" class="btn-message">➕ Créer espace</a></p>
+    <ul id="espace-list">Loading...</ul>
+</div>
 
-            const lien = document.createElement("a");
-            lien.href = `espaceTravail.html?nom=\${encodeURIComponent(espace.nom)}`;
-            lien.textContent = espace.nom + " - " + espace.description;
-            lien.style.marginRight = "1em";
-
-            div.appendChild(lien);
-
-            if (espace.isAdmin) {
-                const btn = document.createElement("button");
-                btn.textContent = "🗑️ Supprimer";
-                btn.className = "btn-message";
-                btn.onclick = () => deleteEspace(espace.nom);
-                div.appendChild(btn);
-            }
-
-            container.appendChild(div);
-        });
-    }
-    function deleteEspace(nom) {
-        if (!confirm(`Voulez-vous vraiment supprimer l'espace "\${nom}" ?`)) return;
-
-        fetch(`espaceTravail?nom=\${encodeURIComponent(nom)}`, {
-            method: 'DELETE'
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert("Espace supprimé !");
-                    location.reload();
-                } else {
-                    alert("Erreur : " + data.message);
-                }
-            })
-            .catch(error => console.error('Erreur lors de la suppression :', error));
-    }
-</script>
-<h1>Invitations en attente</h1>
-<ul id="invitations-list">Loading...</ul>
+<div class="invitations-container">
+    <h1>Invitations en attente</h1>
+    <ul id="invitations-list">Loading...</ul>
+</div>
 
 <!-- Section Admin (seulement visible si admin) -->
 <div id="admin-section" style="display: none;">
@@ -227,31 +259,96 @@
             });
     }
 
+    function loadInvitations() {
+        fetch("invitationEspace/")
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById("invitations-list");
+                container.innerHTML = "";
+
+                if (data.success && data.invitations.length > 0) {
+                    data.invitations.forEach(invitation => {
+                        const item = document.createElement("li");
+                        item.className = "invitation-item";
+
+                        const text = document.createElement("span");
+                        text.textContent = `Invitation pour l'espace: \${invitation.espaceNom}`;
+
+                        const buttons = document.createElement("div");
+                        buttons.className = "action-buttons";
+
+                        const acceptBtn = document.createElement("button");
+                        acceptBtn.className = "btn-message btn-accept";
+                        acceptBtn.textContent = "Accepter";
+                        acceptBtn.onclick = () => respondToInvitation(invitation.id, true);
+
+                        const declineBtn = document.createElement("button");
+                        declineBtn.className = "btn-message btn-danger";
+                        declineBtn.textContent = "Refuser";
+                        declineBtn.onclick = () => respondToInvitation(invitation.id, false);
+
+                        buttons.appendChild(acceptBtn);
+                        buttons.appendChild(declineBtn);
+
+                        item.appendChild(text);
+                        item.appendChild(buttons);
+                        container.appendChild(item);
+                    });
+                } else {
+                    container.textContent = "Aucune invitation en attente";
+                }
+            });
+    }
+
+    function respondToInvitation(invitationId, accept) {
+        fetch(`invitationEspace/?id=\${invitationId}&accept=\${accept}`, {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(accept ? "Invitation acceptée !" : "Invitation refusée.");
+                    loadInvitations();
+                    if (accept) loadEspaces();
+                } else {
+                    alert("Erreur: " + data.message);
+                }
+            });
+    }
 
     function afficherEspaces(espaces) {
         const container = document.getElementById("espace-list");
         container.innerHTML = "";
 
+        if (espaces.length === 0) {
+            container.textContent = "Aucun espace disponible";
+            return;
+        }
+
         espaces.forEach(espace => {
-            const div = document.createElement("div");
-            div.className = "espace-item";
+            const item = document.createElement("li");
+            item.className = "espace-item";
 
             const lien = document.createElement("a");
             lien.href = `espaceTravail.html?nom=\${encodeURIComponent(espace.nom)}`;
             lien.textContent = `\${espace.nom} - \${espace.description}`;
-            lien.style.marginRight = "10px";
 
-            div.appendChild(lien);
+            item.appendChild(lien);
 
             if (espace.isAdmin) {
+                const btnContainer = document.createElement("div");
+                btnContainer.className = "action-buttons";
+
                 const btnSuppr = document.createElement("button");
-                btnSuppr.textContent = "Supprimer";
-                btnSuppr.className = "btn-message";
+                btnSuppr.textContent = "🗑️ Supprimer";
+                btnSuppr.className = "btn-message btn-danger";
                 btnSuppr.onclick = () => deleteEspace(espace.nom);
-                div.appendChild(btnSuppr);
+
+                btnContainer.appendChild(btnSuppr);
+                item.appendChild(btnContainer);
             }
 
-            container.appendChild(div);
+            container.appendChild(item);
         });
     }
 

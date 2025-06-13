@@ -2,53 +2,176 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Canal</title>
+    <title>Canaux</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #3b5998;
+            margin-bottom: 30px;
+        }
+
+        .welcome {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .canal-list {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            list-style-type: none;
+        }
+
+        .canal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .canal-item:last-child {
+            border-bottom: none;
+        }
+
+        .canal-name {
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .btn-message {
+            padding: 6px 12px;
+            background-color: #3b5998;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+
+        .btn-message:hover {
+            background-color: #2d4373;
+        }
+
+        #canal-form {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        #canal-form h3 {
+            margin-top: 0;
+            color: #3b5998;
+        }
+
+        #canal-form input,
+        #canal-form select {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        .logout {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .logout a {
+            color: #e53935;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .logout a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-<h1>Canaux</h1>
-<p>Liste des canaux publics</p>
-<ul id="canal-list"></ul>
+<h1>Canaux de l'espace</h1>
+<p class="welcome">Liste des canaux disponibles :</p>
 
-<div id="canal-form" style="display:none;">
-    <h3>Créer un canal</h3>
+<ul id="canal-list" class="canal-list">Chargement...</ul>
+
+<div id="canal-form">
+    <h3>Créer un nouveau canal</h3>
     <input type="text" id="canal-nom" placeholder="Nom du canal">
     <select id="canal-statut">
         <option value="Public">Public</option>
         <option value="Privé">Privé</option>
     </select>
-    <button onclick="createCanal()">Créer</button>
+    <button class="btn-message" onclick="createCanal()">Créer</button>
+</div>
+
+<div class="logout">
+    <a href="../login.jsp">Se déconnecter</a>
 </div>
 
 <script>
-
     const espaceNom = new URLSearchParams(window.location.search).get("nom");
     let isAdmin = false;
 
     async function fetchCanaux() {
-        const res = await fetch(`canal?espace=${encodeURIComponent(espaceNom)}`);
-        const data = await res.json();
+        try {
+            const res = await fetch(`canal?espace=${encodeURIComponent(espaceNom)}`);
+            const data = await res.json();
 
-        const list = document.getElementById("canal-list");
-        list.innerHTML = "";
+            const list = document.getElementById("canal-list");
+            list.innerHTML = "";
 
-        if (data.success) {
-            data.canaux.forEach(canal => {
-                const li = document.createElement("li");
-                const lien = document.createElement("a");
-                lien.href = `conversationCanal.html?canal=${encodeURIComponent(canal.nom)}`;
-                lien.textContent = `${canal.nom} (${canal.statut})`;
-                li.appendChild(lien);
-                list.appendChild(li);
-                if (isAdmin) {
-                    const btn = document.createElement("button");
-                    btn.textContent = "🗑️ Supprimer";
-                    btn.className = "btn-message";
-                    btn.onclick = () => deleteCanal(canal.nom);
-                    li.appendChild(btn);
-                }
-            });
+            if (data.success && data.canaux.length > 0) {
+                data.canaux.forEach(canal => {
+                    const li = document.createElement("li");
+                    li.className = "canal-item";
+
+                    const div = document.createElement("div");
+                    div.className = "canal-name";
+
+                    const lien = document.createElement("a");
+                    lien.href = `conversationCanal.html?canal=${encodeURIComponent(canal.nom)}`;
+                    lien.textContent = `${canal.nom} (${canal.statut})`;
+
+                    div.appendChild(lien);
+                    li.appendChild(div);
+
+                    if (isAdmin) {
+                        const btn = document.createElement("button");
+                        btn.textContent = "Supprimer";
+                        btn.className = "btn-message";
+                        btn.onclick = () => deleteCanal(canal.nom);
+                        li.appendChild(btn);
+                    }
+
+                    list.appendChild(li);
+                });
+            } else {
+                list.innerHTML = "<li>Aucun canal disponible</li>";
+            }
+        } catch (error) {
+            console.error("Erreur lors du chargement des canaux:", error);
+            document.getElementById("canal-list").innerHTML = "<li>Erreur lors du chargement des canaux</li>";
         }
     }
+
     function deleteCanal(nom) {
         if (!confirm(`Voulez-vous vraiment supprimer le canal "${nom}" ?`)) return;
 
@@ -59,46 +182,70 @@
             .then(data => {
                 if (data.success) {
                     alert("Canal supprimé !");
-                    location.reload();
+                    fetchCanaux();
                 } else {
                     alert("Erreur : " + data.message);
                 }
             })
-            .catch(error => console.error('Erreur lors de la suppression :', error));
+            .catch(error => {
+                console.error('Erreur lors de la suppression :', error);
+                alert("Erreur lors de la suppression");
+            });
     }
+
     async function checkAdmin() {
-        const res = await fetch(`espaceTravail/`);
-        const data = await res.json();
-        if (data.success) {
-            const espace = data.espaces.find(e => e.nom === espaceNom);
-            if (espace && espace.isAdmin) {
-                isAdmin = true;
-                document.getElementById("canal-form").style.display = "block";
+        try {
+            const res = await fetch(`espaceTravail/`);
+            const data = await res.json();
+            if (data.success) {
+                const espace = data.espaces.find(e => e.nom === espaceNom);
+                if (espace && espace.isAdmin) {
+                    isAdmin = true;
+                    document.getElementById("canal-form").style.display = "block";
+                }
             }
+        } catch (error) {
+            console.error("Erreur lors de la vérification des droits admin:", error);
         }
     }
 
     async function createCanal() {
-        const nom = document.getElementById("canal-nom").value;
+        const nom = document.getElementById("canal-nom").value.trim();
         const statut = document.getElementById("canal-statut").value;
 
-        const res = await fetch("canal/", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                nom: nom,
-                statut: statut,
-                nomEspace: espaceNom
-            })
-        });
+        if (!nom) {
+            alert("Veuillez entrer un nom pour le canal");
+            return;
+        }
 
-        const data = await res.json();
-        alert(data.message || "Création effectuée");
-        fetchCanaux();
+        try {
+            const res = await fetch("canal/", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    nom: nom,
+                    statut: statut,
+                    nomEspace: espaceNom
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById("canal-nom").value = "";
+                fetchCanaux();
+            }
+            alert(data.message || (data.success ? "Canal créé avec succès" : "Erreur lors de la création"));
+        } catch (error) {
+            console.error("Erreur lors de la création du canal:", error);
+            alert("Erreur lors de la création du canal");
+        }
     }
 
-    checkAdmin();
-    fetchCanaux();
+    // Initialisation
+    document.addEventListener("DOMContentLoaded", () => {
+        checkAdmin();
+        fetchCanaux();
+    });
 </script>
 </body>
 </html>

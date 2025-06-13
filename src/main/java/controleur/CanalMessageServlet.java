@@ -87,7 +87,6 @@ public class CanalMessageServlet extends HttpServlet {
             mapper.writeValue(resp.getWriter(), new ApiResponse(false, "Erreur: " + e.getMessage()));
         }
     }
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("application/json;charset=UTF-8");
